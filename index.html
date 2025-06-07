@@ -94,48 +94,6 @@
     <div class="bg-white p-8 rounded-xl shadow-lg max-w-2xl w-full border border-gray-200">
         <h1 class="text-4xl font-extrabold text-gray-800 mb-6 text-center">Autoencoder Visual</h1>
 
-        <!-- Selector de Operación: Decodificador o Quitar Ruido -->
-        <div class="mb-4">
-            <label for="operationSelect" class="block text-gray-700 text-sm font-semibold mb-2">Seleccione operación:</label>
-            <select id="operationSelect" class="block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out">
-                <option value="decode">Decodificador</option>
-                <option value="denoise">Quitar Ruido (Denoise)</option>
-            </select>
-        </div>
-
-        <!-- Sección para Quitar Ruido (Denoise) -->
-        <div id="denoiseSection" class="main-section hidden">
-            <h2 class="text-2xl font-bold text-gray-700 mb-4 text-center">Operación Denoise (Quitar Ruido)</h2>
-
-            <div class="mb-4">
-                <h3 class="text-lg font-semibold text-gray-700 mb-2 text-center">Carácter 'F' Original (7x5):</h3>
-                <div id="originalFMatrix" class="grid grid-cols-5 gap-0.5 justify-center mx-auto mb-4" style="max-width: 170px;">
-                    <!-- La matriz de la letra 'F' original se renderizará aquí -->
-                </div>
-            </div>
-
-            <div class="mb-6">
-                <label for="noiseProb" class="block text-gray-700 text-sm font-semibold mb-2">Probabilidad de Ruido (0.00 - 1.00): <span id="noiseProbValue" class="font-bold">0.10</span></label>
-                <input
-                    type="range"
-                    id="noiseProb"
-                    step="0.01"
-                    min="0"
-                    max="1"
-                    value="0.1"
-                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg dark:bg-gray-700"
-                />
-            </div>
-
-            <button
-                onclick="handleDenoisePrediction()"
-                class="w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:from-blue-600 hover:to-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-75 transition duration-200 ease-in-out flex items-center justify-center space-x-2"
-            >
-                <span id="denoiseButtonText">Aplicar Ruido y Denoise</span>
-                <div id="denoiseLoadingSpinner" class="spinner hidden"></div>
-            </button>
-        </div>
-
         <!-- Sección para Decodificar con gráfico de espacio latente -->
         <div id="decodeSection" class="main-section">
             <h2 class="text-2xl font-bold text-gray-700 mb-4 text-center">Gráfico de Espacio Latente</h2>
@@ -187,7 +145,6 @@
             </p>
         </div>
 
-
         <!-- Contenedor para mostrar mensajes de error -->
         <div id="errorContainer" class="mt-8 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 hidden" role="alert">
             <p id="errorMessage" class="font-medium text-lg"></p>
@@ -196,13 +153,12 @@
     </div>
 
     <script>
-        // Variables globales para almacenar los pesos del autoencoder
+        // Variable global para almacenar los pesos del autoencoder (solo se necesita pesosAutoencoder ahora)
         let pesosAutoencoder = null;
-        let pesosRuido = null;
 
-        // Datos de los caracteres y sus coordenadas en el espacio latente
+        // Datos de los caracteres y sus coordenadas en el espacio latente (ACTUALIZADO)
         const labels = ['@', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '[', '\\', ']', '^', '_'];
-        const coords = [[0.62, 0.88], [0.01, 0.49], [0.68, 0.72], [0.87, 0.88], [0.0, 0.0], [0.54, 0.47], [0.52, 0.58], [0.99, 0.96], [0.21, 0.78], [0.78, 0.0], [0.93, 0.38], [0.34, 0.49], [0.43, 0.34], [0.13, 0.79], [0.01, 0.97], [0.84, 1.0], [0.56, 0.67], [0.56, 0.95], [0.43, 0.73], [0.84, 0.71], [0.48, 0.0], [0.33, 0.99], [0.27, 0.94], [0.21, 0.83], [0.21, 0.22], [0.35, 0.13], [0.61, 0.36], [0.15, 0.0], [0.23, 0.13], [1.0, 0.31], [0.23, 0.0], [0.44, 0.3]];
+        const coords = [[0.99, 0.9], [0.98, 0.0], [0.6, 0.78], [0.73, 0.93], [0.34, 0.94], [0.3, 0.6], [0.35, 0.56], [0.89, 0.99], [0.54, 0.17], [0.0, 0.96], [0.04, 0.53], [0.08, 0.32], [0.2, 0.2], [0.8, 0.1], [0.54, 0.0], [0.75, 0.83], [0.43, 0.46], [0.99, 0.79], [0.37, 0.26], [0.56, 0.96], [0.0, 0.23], [0.73, 0.72], [0.81, 0.51], [0.81, 0.29], [0.12, 0.0], [0.0, 0.0], [0.27, 0.74], [0.19, 1.0], [0.04, 0.04], [0.04, 0.84], [0.04, 0.15], [0.17, 0.87]];
 
         // Combinar las etiquetas y las coordenadas en un formato fácil de usar para D3.js
         const trainingLatentSpaceData = coords.map((coord, index) => ({
@@ -210,17 +166,6 @@
             x: coord[0],
             y: coord[1]
         }));
-
-        // La matriz aplanada de la letra 'F' (7x5 = 35 elementos)
-        const originalF = [
-            1, 1, 1, 1, 1,
-            1, 0, 0, 0, 0,
-            1, 0, 0, 0, 0,
-            1, 1, 1, 1, 1,
-            1, 0, 0, 0, 0,
-            1, 0, 0, 0, 0,
-            1, 0, 0, 0, 0
-        ];
 
         let selectedArbitraryCircle = null; // Variable para almacenar la referencia al círculo de selección arbitraria en D3.js
 
@@ -253,7 +198,7 @@
                 .domain([-0.05, 1.05]) // Rango de datos para el eje Y, con un pequeño padding
                 .range([height, 0]); // Rango de píxeles para el eje Y (invertido para que el origen esté abajo a la izquierda)
 
-            // Dibujar los ejes X e Y (sin etiquetas de texto)
+            // Dibujar los ejes X e Y (sin etiquetas de texto, como se solicitó)
             g.append("g")
                 .attr("class", "x axis") // Clase para aplicar estilos CSS
                 .attr("transform", `translate(0,${height})`) // Posicionar el eje X en la parte inferior
@@ -334,37 +279,11 @@
         }
 
         /**
-         * Muestra u oculta las secciones de la interfaz de usuario
-         * según la operación seleccionada (Decodificador o Quitar Ruido).
-         */
-        function toggleSections() {
-            const operation = document.getElementById('operationSelect').value;
-            const denoiseSection = document.getElementById('denoiseSection');
-            const decodeSection = document.getElementById('decodeSection');
-            const predictionResultSection = document.getElementById('predictionResultSection');
-
-            if (operation === 'denoise') {
-                denoiseSection.classList.remove('hidden');
-                decodeSection.classList.add('hidden');
-                predictionResultSection.classList.add('hidden'); // Ocultar resultados al cambiar a denoise hasta que se haga una predicción
-                mostrarMatriz(originalF, "originalFMatrix", 5); // Mostrar la F original
-            } else if (operation === 'decode') {
-                denoiseSection.classList.add('hidden');
-                decodeSection.classList.remove('hidden');
-                predictionResultSection.classList.add('hidden'); // Ocultar resultados al cambiar a decode hasta que se haga una predicción
-                initChart(); // Reinicializa el gráfico D3.js cuando se muestra la sección de decodificación
-            }
-            // Limpiar mensajes de error al cambiar de sección
-            document.getElementById('errorContainer').classList.add('hidden');
-        }
-
-        /**
          * Función sigmoide (activación) para las capas del autoencoder.
          * @param {any} x - Entrada (número o matriz de math.js).
          * @returns {any} Salida de la función sigmoide.
          */
         function sigmoide(x) {
-            // CORRECCIÓN: Usar math.map para aplicar exp a cada elemento de la matriz
             return math.dotDivide(1, math.add(1, math.map(math.multiply(-1, x), math.exp)));
         }
 
@@ -379,72 +298,14 @@
          * @returns {Array<number[]>} La salida decodificada.
          */
         function decoder(V_latente, w3, w4, b3, b4) {
-            // V3 = sigmoide(V_latente @ w3 + b3)
             let V3 = sigmoide(math.add(math.multiply(V_latente, w3), b3));
-            // V4 = sigmoide(V3 @ w4 + b4)
             let V4 = sigmoide(math.add(math.multiply(V3, w4), b4));
             return V4;
         }
-
-        /**
-         * Implementación de la función de eliminación de ruido (autoencoder completo) en JavaScript.
-         * Corresponde a la función `predecir_autoencoder_ruido` de tu código Python.
-         * @param {Array<number[]>} Vk - Entrada con ruido.
-         * @param {Array<number[]>} w1 - Pesos de la primera capa.
-         * @param {Array<number[]>} w2 - Pesos de la segunda capa.
-         * @param {Array<number[]>} w3 - Pesos de la tercera capa.
-         * @param {Array<number[]>} w4 - Pesos de la cuarta capa.
-         * @param {Array<number>} b1 - Bias de la primera capa.
-         * @param {Array<number>} b2 - Bias de la segunda capa.
-         * @param {Array<number>} b3 - Bias de la tercera capa.
-         * @param {Array<number>} b4 - Bias de la cuarta capa.
-         * @returns {Array<number[]>} La salida denoised.
-         */
-        function predecir_autoencoder_ruido(Vk, w1, w2, w3, w4, b1, b2, b3, b4) {
-            // Asegúrate de que Vk sea una matriz de math.js si no lo es ya
-            const VkMatrix = math.matrix(Vk);
-
-            // V1 = sigmoide(Vk @ w1 + b1)
-            let V1 = sigmoide(math.add(math.multiply(VkMatrix, w1), b1));
-            // V2 = sigmoide(V1 @ w2 + b2)
-            let V2 = sigmoide(math.add(math.multiply(V1, w2), b2));
-            // V3 = sigmoide(V2 @ w3 + b3)
-            let V3 = sigmoide(math.add(math.multiply(V2, w3), b3));
-            // V4 = sigmoide(V3 @ w4 + b4)
-            let V4 = sigmoide(math.add(math.multiply(V3, w4), b4));
-            return V4;
-        }
-
-        /**
-         * Agrega ruido binario a una matriz de entrada.
-         * @param {Array<number>} x - La matriz original a la que se le agregará ruido (aplanada).
-         * @param {number} prob - La probabilidad (entre 0 y 1) de voltear un bit.
-         * @returns {Array<number>} La matriz con ruido.
-         */
-        function agregar_ruido(x, prob = 0.02) {
-            // Crear una copia del array para no modificar el original
-            const x_ruido = [...x];
-            let cambios = 0;
-
-            // No establecemos la semilla aquí en JS, ya que Math.random() es intrínsecamente aleatorio.
-            // Si necesitas reproducibilidad exacta como np.random.seed(11), tendrías que implementar
-            // un generador de números pseudoaleatorios con una semilla específica.
-            for (let i = 0; i < x_ruido.length; i++) {
-                // Generar un número aleatorio entre 0 y 1
-                if (Math.random() < prob) {
-                    cambios++;
-                    // Voltear el bit: si es 0, se vuelve 1; si es 1, se vuelve 0
-                    x_ruido[i] = x_ruido[i] === 0 ? 1 : 0;
-                }
-            }
-            console.log(`Cambios realizados: ${cambios}`);
-            return x_ruido;
-        }
-
 
         /**
          * Muestra una matriz binaria (0s y 1s) como una cuadrícula de celdas.
-         * Utilizado para visualizar la salida decodificada/denoised.
+         * Utilizado para visualizar la salida decodificada.
          * @param {Array<number>} binaryOutput - Array de 0s y 1s.
          * @param {string} targetElementId - ID del elemento HTML donde se renderizará la matriz.
          * @param {number} cols - Número de columnas para la cuadrícula (ej: 5 para 5x5).
@@ -456,32 +317,27 @@
                 return;
             }
 
-            // Obtener referencias a elementos relacionados en la sección de resultados
             const predictionResultSection = document.getElementById("predictionResultSection");
             const predictionPlaceholder = document.getElementById("predictionPlaceholder");
 
             matrixDiv.innerHTML = ""; // Limpia la matriz anterior
 
             if (binaryOutput.length === 0) {
-                // Si no hay datos, mostrar placeholder y ocultar matriz
                 predictionPlaceholder.textContent = "No hay datos para mostrar la matriz.";
                 predictionPlaceholder.classList.remove('hidden');
                 matrixDiv.classList.add('hidden');
-                predictionResultSection.classList.remove('hidden'); // Asegura que la sección padre sea visible
+                predictionResultSection.classList.remove('hidden');
                 return;
             }
 
-            // Si hay datos, mostrar matriz y ocultar placeholder
             matrixDiv.classList.remove('hidden');
             predictionPlaceholder.classList.add('hidden');
-            predictionResultSection.classList.remove('hidden'); // Asegura que la sección padre sea visible
+            predictionResultSection.classList.remove('hidden');
 
-            // Establecer el estilo de la cuadrícula dinámicamente
             matrixDiv.style.gridTemplateColumns = `repeat(${cols}, 30px)`;
 
             binaryOutput.forEach((val) => {
                 const cell = document.createElement("div");
-                // Aplica clases de Tailwind para el estilo de la celda
                 cell.className = `matrix-cell rounded-sm ${val ? "active" : "inactive"}`;
                 matrixDiv.appendChild(cell);
             });
@@ -542,10 +398,9 @@
          * Carga los archivos de pesos del autoencoder desde el directorio local.
          */
         async function cargarPesos() {
-            hideErrorMessage(); // Ocultar errores anteriores
+            hideErrorMessage();
 
             try {
-                // Cargar pesos_autoencoder.json (para el decodificador principal)
                 const responseAutoencoder = await fetch('pesos_autoencoder.json');
                 if (!responseAutoencoder.ok) {
                     throw new Error(`Error al cargar 'pesos_autoencoder.json': ${responseAutoencoder.statusText}`);
@@ -553,90 +408,10 @@
                 pesosAutoencoder = await responseAutoencoder.json();
                 console.log("Pesos Autoencoder cargados:", pesosAutoencoder);
 
-                // Cargar pesos_autoencoder_ruido.json (para la operación de quitar ruido)
-                const responseRuido = await fetch('pesos_autoencoder_ruido.json');
-                if (!responseRuido.ok) {
-                    throw new Error(`Error al cargar 'pesos_autoencoder_ruido.json': ${responseRuido.statusText}`);
-                }
-                pesosRuido = await responseRuido.json();
-                console.log("Pesos Ruido cargados:", pesosRuido);
-
             } catch (error) {
-                showErrorMessage(`No se pudieron cargar los archivos de pesos. Asegúrate de que 'pesos_autoencoder.json' y 'pesos_autoencoder_ruido.json' están en la misma carpeta. Detalle: ${error.message}`);
+                showErrorMessage(`No se pudo cargar el archivo de pesos. Asegúrate de que 'pesos_autoencoder.json' está en la misma carpeta. Detalle: ${error.message}`);
                 console.error("Error al cargar pesos:", error);
-                // Si los pesos no se cargan, las operaciones de predicción no funcionarán.
                 pesosAutoencoder = null;
-                pesosRuido = null;
-            }
-        }
-
-
-        /**
-         * Maneja la lógica para la operación "Quitar Ruido" (Denoise).
-         * Aplica ruido al carácter 'F' y luego lo pasa por el autoencoder para limpiarlo.
-         */
-        async function handleDenoisePrediction() {
-            hideErrorMessage();
-            const noiseProb = parseFloat(document.getElementById('noiseProb').value);
-
-            if (!pesosRuido) {
-                showErrorMessage("Los pesos para la operación de quitar ruido no se han cargado. Recarga la página o verifica los archivos JSON.");
-                return;
-            }
-
-            // Validar la probabilidad de ruido
-            if (isNaN(noiseProb) || noiseProb < 0 || noiseProb > 1) {
-                showErrorMessage('La probabilidad de ruido debe ser un número entre 0 y 1.');
-                return;
-            }
-
-            // Mostrar estado de carga
-            showLoadingState('denoiseButtonText', 'denoiseLoadingSpinner', 'denoiseSection');
-            const predictionResultSection = document.getElementById("predictionResultSection");
-            const predictionPlaceholder = document.getElementById("predictionPlaceholder");
-            const predictionMatrix = document.getElementById("predictionMatrix");
-
-            // Ocultar resultados anteriores y placeholder
-            predictionResultSection.classList.add('hidden');
-            predictionMatrix.classList.add('hidden'); // Asegurarse de que la matriz esté oculta inicialmente
-            predictionPlaceholder.classList.add('hidden');
-
-
-            try {
-                // 1. Aplicar ruido al carácter 'F' original
-                const noisyF = agregar_ruido(originalF, noiseProb);
-
-                // 2. Convertir la entrada con ruido a una matriz de math.js (debe ser 2D)
-                // Se asegura que `noisyF` sea un array de arrays, aunque sea solo uno, para `math.matrix`
-                const Vk = math.matrix([noisyF]);
-
-                // 3. Realizar la predicción de eliminación de ruido localmente
-                const outputV4 = predecir_autoencoder_ruido(
-                    Vk,
-                    // Acceso a las propiedades de pesosRuido con el sufijo 'a'
-                    math.matrix(pesosRuido.w1a),
-                    math.matrix(pesosRuido.w2a),
-                    math.matrix(pesosRuido.w3a),
-                    math.matrix(pesosRuido.w4a),
-                    math.matrix(pesosRuido.b1a),
-                    math.matrix(pesosRuido.b2a),
-                    math.matrix(pesosRuido.b3a),
-                    math.matrix(pesosRuido.b4a)
-                );
-
-                // 4. Convertir la salida de math.js a un array plano y luego a binario (0 o 1)
-                const binaryOutput = outputV4.toArray()[0].map(v => v > 0.5 ? 1 : 0);
-
-                // 5. Mostrar la matriz denoised en la sección de resultados
-                // La función mostrarMatriz ahora se encarga de mostrar/ocultar predictionMatrix y predictionPlaceholder
-                mostrarMatriz(binaryOutput, "predictionMatrix", 5); // Suponemos una matriz de 5 columnas
-
-            } catch (error) {
-                showErrorMessage(`Error durante la predicción de Denoise: ${error.message}`);
-                console.error("Error en la predicción Denoise:", error);
-            } finally {
-                // Ocultar estado de carga
-                hideLoadingState('denoiseButtonText', 'denoiseLoadingSpinner', 'Aplicar Ruido y Denoise', 'denoiseSection');
             }
         }
 
@@ -650,34 +425,27 @@
             const manualY = document.getElementById('manualY').value;
 
             if (!pesosAutoencoder) {
-                showErrorMessage("Los pesos para la operación de decodificación no se han cargado. Recarga la página o verifica los archivos JSON.");
+                showErrorMessage("Los pesos para la operación de decodificación no se han cargado. Recarga la página o verifica el archivo JSON.");
                 return;
             }
 
-            // Mostrar estado de carga
             showLoadingState('decodeButtonText', 'decodeLoadingSpinner', 'decodeSection');
             const predictionResultSection = document.getElementById("predictionResultSection");
             const predictionPlaceholder = document.getElementById("predictionPlaceholder");
             const predictionMatrix = document.getElementById("predictionMatrix");
 
-
-            // Ocultar resultados anteriores y placeholder
             predictionResultSection.classList.add('hidden');
-            predictionMatrix.classList.add('hidden'); // Asegurarse de que la matriz esté oculta inicialmente
+            predictionMatrix.classList.add('hidden');
             predictionPlaceholder.classList.add('hidden');
 
-
             try {
-                // Validar entrada
                 if (manualX === '' || manualY === '' || isNaN(Number(manualX)) || isNaN(Number(manualY))) {
                     showErrorMessage('Por favor, ingrese valores X e Y válidos para decodificar (números).');
                     return;
                 }
 
-                // Crear el vector latente de entrada como una matriz de math.js
                 const V_latente = math.matrix([[Number(manualX), Number(manualY)]]);
 
-                // Realizar la decodificación localmente
                 const salida = decoder(
                     V_latente,
                     math.matrix(pesosAutoencoder.w3),
@@ -686,43 +454,27 @@
                     math.matrix(pesosAutoencoder.b4)
                 );
 
-                // Convertir la salida de math.js a un array plano y luego a binario
                 const binaryOutput = salida.toArray()[0].map(v => v > 0.5 ? 1 : 0);
 
-                // Mostrar la matriz decodificada
-                // La función mostrarMatriz ahora se encarga de mostrar/ocultar predictionMatrix y predictionPlaceholder
-                mostrarMatriz(binaryOutput, "predictionMatrix", 5); // Suponemos una matriz de 5 columnas
+                mostrarMatriz(binaryOutput, "predictionMatrix", 5);
 
             } catch (error) {
                 showErrorMessage(`Error durante la decodificación: ${error.message}`);
                 console.error("Error en la decodificación:", error);
             } finally {
-                // Ocultar estado de carga
                 hideLoadingState('decodeButtonText', 'decodeLoadingSpinner', 'Generar Decodificación', 'decodeSection');
             }
         }
 
-        // Event listener para actualizar el valor del slider de probabilidad de ruido
-        document.getElementById('noiseProb').addEventListener('input', function() {
-            document.getElementById('noiseProbValue').textContent = parseFloat(this.value).toFixed(2);
-        });
-
-        // Escuchar cambios en el selector de operación para mostrar la sección correcta
-        document.getElementById('operationSelect').addEventListener('change', toggleSections);
-
-        // Al cargar la página, cargamos los pesos y luego inicializamos la vista.
+        // Al cargar la página, cargamos los pesos y luego inicializamos el gráfico.
         document.addEventListener('DOMContentLoaded', async () => {
             await cargarPesos(); // Espera a que los pesos se carguen antes de continuar
-            toggleSections(); // Inicializa la vista según la operación seleccionada
-            // Establece el valor inicial del slider en el texto
-            document.getElementById('noiseProbValue').textContent = parseFloat(document.getElementById('noiseProb').value).toFixed(2);
+            initChart(); // Inicializa el gráfico
         });
 
         // Volver a dibujar el gráfico si la ventana se redimensiona, para asegurar que sea responsivo
         window.addEventListener('resize', () => {
-            if (document.getElementById('operationSelect').value === 'decode') {
-                initChart();
-            }
+            initChart();
         });
     </script>
 </body>
