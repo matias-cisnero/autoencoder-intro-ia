@@ -1,7 +1,9 @@
 from flask import Flask, request, jsonify
 import numpy as np
+from flask_cors import CORS  # <-- importar CORS
 
-app = Flask(__name__)
+app = Flask(__name__)        # <-- crear app Flask
+CORS(app)                    # <-- habilitar CORS
 
 # Carga tus pesos guardados (por ejemplo, en un archivo .npz)
 # Aquí solo ejemplo dummy
@@ -28,4 +30,3 @@ def predict_api():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
-
