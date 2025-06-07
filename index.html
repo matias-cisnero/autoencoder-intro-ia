@@ -115,15 +115,15 @@
             </div>
 
             <div class="mb-6">
-                <label for="noiseProb" class="block text-gray-700 text-sm font-semibold mb-2">Probabilidad de Ruido (0.00 - 1.00):</label>
+                <label for="noiseProb" class="block text-gray-700 text-sm font-semibold mb-2">Probabilidad de Ruido (0.00 - 1.00): <span id="noiseProbValue" class="font-bold">0.10</span></label>
                 <input
-                    type="number"
+                    type="range"
                     id="noiseProb"
                     step="0.01"
                     min="0"
                     max="1"
                     value="0.1"
-                    class="block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out"
+                    class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer range-lg dark:bg-gray-700"
                 />
             </div>
 
@@ -263,28 +263,6 @@
                 .attr("class", "y axis") // Clase para aplicar estilos CSS
                 .call(d3.axisLeft(yScale)); // Generar el eje izquierdo
 
-            // NOTA: Se eliminan las etiquetas de los ejes X e Y como se solicitó.
-            /*
-            g.append("text")
-                .attr("class", "axis-label")
-                .attr("x", width / 2)
-                .attr("y", height + margin.bottom / 1.5)
-                .attr("text-anchor", "middle")
-                .style("fill", "#475569")
-                .style("font-size", "0.9rem")
-                .text("Dimensión Latente X");
-
-            g.append("text")
-                .attr("class", "axis-label")
-                .attr("transform", "rotate(-90)")
-                .attr("y", -margin.left / 2)
-                .attr("x", -height / 2)
-                .attr("text-anchor", "middle")
-                .style("fill", "#475569")
-                .style("font-size", "0.9rem")
-                .text("Dimensión Latente Y");
-            */
-
             // Añadir las etiquetas de los caracteres al gráfico
             const points = g.selectAll(".point-group")
                 .data(trainingLatentSpaceData) // Enlazar los datos
@@ -386,8 +364,8 @@
          * @returns {any} Salida de la función sigmoide.
          */
         function sigmoide(x) {
-            // math.js se usa para operaciones matriciales seguras
-            return math.dotDivide(1, math.add(1, math.exp(math.multiply(-1, x))));
+            // CORRECCIÓN: Usar math.map para aplicar exp a cada elemento de la matriz
+            return math.dotDivide(1, math.add(1, math.map(math.multiply(-1, x), math.exp)));
         }
 
         /**
@@ -448,6 +426,9 @@
             const x_ruido = [...x];
             let cambios = 0;
 
+            // No establecemos la semilla aquí en JS, ya que Math.random() es intrínsecamente aleatorio.
+            // Si necesitas reproducibilidad exacta como np.random.seed(11), tendrías que implementar
+            // un generador de números pseudoaleatorios con una semilla específica.
             for (let i = 0; i < x_ruido.length; i++) {
                 // Generar un número aleatorio entre 0 y 1
                 if (Math.random() < prob) {
@@ -614,19 +595,21 @@
                 const noisyF = agregar_ruido(originalF, noiseProb);
 
                 // 2. Convertir la entrada con ruido a una matriz de math.js (debe ser 2D)
+                // Se asegura que `noisyF` sea un array de arrays, aunque sea solo uno, para `math.matrix`
                 const Vk = math.matrix([noisyF]);
 
                 // 3. Realizar la predicción de eliminación de ruido localmente
                 const outputV4 = predecir_autoencoder_ruido(
                     Vk,
-                    math.matrix(pesosRuido.w1),
-                    math.matrix(pesosRuido.w2),
-                    math.matrix(pesosRuido.w3),
-                    math.matrix(pesosRuido.w4),
-                    math.matrix(pesosRuido.b1),
-                    math.matrix(pesosRuido.b2),
-                    math.matrix(pesosRuido.b3),
-                    math.matrix(pesosRuido.b4)
+                    // CORRECCIÓN: Acceso a las propiedades de pesosRuido con el sufijo 'a'
+                    math.matrix(pesosRuido.w1a),
+                    math.matrix(pesosRuido.w2a),
+                    math.matrix(pesosRuido.w3a),
+                    math.matrix(pesosRuido.w4a),
+                    math.matrix(pesosRuido.b1a),
+                    math.matrix(pesosRuido.b2a),
+                    math.matrix(pesosRuido.b3a),
+                    math.matrix(pesosRuido.b4a)
                 );
 
                 // 4. Convertir la salida de math.js a un array plano y luego a binario (0 o 1)
@@ -641,7 +624,7 @@
                 console.error("Error en la predicción Denoise:", error);
             } finally {
                 // Ocultar estado de carga
-                hideLoadingState('denoiseButtonText', 'denoiseLoadingSpinner', 'Predecir', 'denoiseSection');
+                hideLoadingState('denoiseButtonText', 'denoiseLoadingSpinner', 'Aplicar Ruido y Denoise', 'denoiseSection');
             }
         }
 
@@ -707,6 +690,11 @@
             }
         }
 
+        // Event listener para actualizar el valor del slider de probabilidad de ruido
+        document.getElementById('noiseProb').addEventListener('input', function() {
+            document.getElementById('noiseProbValue').textContent = parseFloat(this.value).toFixed(2);
+        });
+
         // Escuchar cambios en el selector de operación para mostrar la sección correcta
         document.getElementById('operationSelect').addEventListener('change', toggleSections);
 
@@ -714,6 +702,8 @@
         document.addEventListener('DOMContentLoaded', async () => {
             await cargarPesos(); // Espera a que los pesos se carguen antes de continuar
             toggleSections(); // Inicializa la vista según la operación seleccionada
+            // Establece el valor inicial del slider en el texto
+            document.getElementById('noiseProbValue').textContent = parseFloat(document.getElementById('noiseProb').value).toFixed(2);
         });
 
         // Volver a dibujar el gráfico si la ventana se redimensiona, para asegurar que sea responsivo
