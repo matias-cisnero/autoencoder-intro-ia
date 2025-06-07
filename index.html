@@ -91,58 +91,60 @@
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-8 rounded-xl shadow-lg max-w-2xl w-full border border-gray-200">
+    <div class="bg-white p-8 rounded-xl shadow-lg max-w-4xl w-full border border-gray-200 relative"> <!-- Added relative for absolute positioning of the link -->
         <h1 class="text-4xl font-extrabold text-gray-800 mb-6 text-center">Autoencoder Visual</h1>
 
-        <!-- Sección para Decodificar con gráfico de espacio latente -->
-        <div id="decodeSection" class="main-section">
-            <h2 class="text-2xl font-bold text-gray-700 mb-4 text-center">Gráfico de Espacio Latente</h2>
-            <div id="chart-container" class="mb-6">
-                <!-- El SVG de D3.js para el gráfico se renderizará aquí -->
-                <svg id="chart-svg" class="w-full" style="height: 400px;"></svg>
-            </div>
-
-            <div class="mb-4 grid grid-cols-2 gap-4">
-                <div>
-                    <label for="manualX" class="block text-gray-700 text-sm font-semibold mb-2">Valor X:</label>
-                    <input
-                        type="number"
-                        id="manualX"
-                        step="0.01"
-                        placeholder="Ej: 0.5"
-                        class="block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out"
-                    />
+        <!-- Main content area: Graph and Results - side-by-side on md screens and up -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Left Column: Decoder Graph and Controls -->
+            <div id="decodeSection" class="main-section flex flex-col items-center"> <!-- Center items in this column -->
+                <h2 class="text-2xl font-bold text-gray-700 mb-4 text-center w-full">Gráfico de Espacio Latente</h2>
+                <div id="chart-container" class="mb-6 w-full flex justify-center">
+                    <svg id="chart-svg" class="w-full" style="height: 400px;"></svg>
                 </div>
-                <div>
-                    <label for="manualY" class="block text-gray-700 text-sm font-semibold mb-2">Valor Y:</label>
-                    <input
-                        type="number"
-                        id="manualY"
-                        step="0.01"
-                        placeholder="Ej: -0.2"
-                        class="block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out"
-                    />
+
+                <div class="mb-4 grid grid-cols-2 gap-4 w-full"> <!-- w-full to make inputs take full width of column -->
+                    <div>
+                        <label for="manualX" class="block text-gray-700 text-sm font-semibold mb-2">Valor X:</label>
+                        <input
+                            type="number"
+                            id="manualX"
+                            step="0.01"
+                            placeholder="Ej: 0.5"
+                            class="block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out"
+                        />
+                    </div>
+                    <div>
+                        <label for="manualY" class="block text-gray-700 text-sm font-semibold mb-2">Valor Y:</label>
+                        <input
+                            type="number"
+                            id="manualY"
+                            step="0.01"
+                            placeholder="Ej: -0.2"
+                            class="block w-full p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-200 ease-in-out"
+                        />
+                    </div>
                 </div>
+
+                <button
+                    onclick="handleDecodePrediction()"
+                    class="w-full bg-gradient-to-r from-green-500 to-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:from-green-600 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition duration-200 ease-in-out flex items-center justify-center space-x-2"
+                >
+                    <span id="decodeButtonText">Generar Decodificación</span>
+                    <div id="decodeLoadingSpinner" class="spinner hidden"></div>
+                </button>
             </div>
 
-            <button
-                onclick="handleDecodePrediction()"
-                class="w-full bg-gradient-to-r from-green-500 to-green-700 text-white font-bold py-3 px-4 rounded-lg shadow-md hover:from-green-600 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-75 transition duration-200 ease-in-out flex items-center justify-center space-x-2"
-            >
-                <span id="decodeButtonText">Generar Decodificación</span>
-                <div id="decodeLoadingSpinner" class="spinner hidden"></div>
-            </button>
-        </div>
-
-        <!-- Contenedor para mostrar el resultado de la predicción (Matriz) -->
-        <div id="predictionResultSection" class="mt-8 p-6 bg-blue-50 rounded-lg shadow-inner hidden">
-            <h2 class="text-xl font-semibold text-blue-800 mb-4 text-center">Resultado de la Predicción</h2>
-            <div id="predictionMatrix" class="grid grid-cols-5 gap-0.5 justify-center mx-auto" style="max-width: 170px;">
-                <!-- Las celdas de la matriz decodificada se insertarán aquí -->
+            <!-- Right Column: Prediction Results -->
+            <div id="predictionResultSection" class="mt-8 md:mt-0 p-6 bg-blue-50 rounded-lg shadow-inner flex flex-col items-center justify-center"> <!-- Added flex for centering, removed hidden for initial state to be managed by JS on load -->
+                <h2 class="text-xl font-semibold text-blue-800 mb-4 text-center">Resultado de la Predicción</h2>
+                <div id="predictionMatrix" class="grid grid-cols-5 gap-0.5 justify-center mx-auto" style="max-width: 170px;">
+                    <!-- Las celdas de la matriz decodificada se insertarán aquí -->
+                </div>
+                <p id="predictionPlaceholder" class="text-center text-gray-500 mt-4 hidden">
+                    El resultado de la predicción se mostrará aquí.
+                </p>
             </div>
-            <p id="predictionPlaceholder" class="text-center text-gray-500 mt-4 hidden">
-                El resultado de la predicción se mostrará aquí.
-            </p>
         </div>
 
         <!-- Contenedor para mostrar mensajes de error -->
@@ -150,10 +152,15 @@
             <p id="errorMessage" class="font-medium text-lg"></p>
         </div>
 
+        <!-- GitHub Link in bottom-right corner -->
+        <a href="https://github.com/matias-cisnero/autoencoder-intro-ia" target="_blank" class="absolute bottom-4 right-4 text-blue-600 hover:underline text-sm">
+            Repositorio de GitHub
+        </a>
+
     </div>
 
     <script>
-        // Variable global para almacenar los pesos del autoencoder (solo se necesita pesosAutoencoder ahora)
+        // Variable global para almacenar los pesos del autoencoder
         let pesosAutoencoder = null;
 
         // Datos de los caracteres y sus coordenadas en el espacio latente (ACTUALIZADO)
