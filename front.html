@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head><title>Autoencoder Demo</title></head>
+<body>
+  <h1>Demo Autoencoder</h1>
+  <input id="inputData" placeholder="Ej: 1,2,3" />
+  <button onclick="sendData()">Predecir</button>
+  <p id="result"></p>
+
+  <script>
+    async function sendData() {
+      const inputStr = document.getElementById('inputData').value;
+      const inputArray = inputStr.split(',').map(Number);
+      const response = await fetch('https://tu-backend-url/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({input: inputArray})
+      });
+      const data = await response.json();
+      document.getElementById('result').textContent = 'Predicción: ' + data.prediction;
+    }
+  </script>
+</body>
+</html>
