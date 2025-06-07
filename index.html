@@ -456,16 +456,28 @@
                 return;
             }
 
+            // Obtener referencias a elementos relacionados en la sección de resultados
+            const predictionResultSection = document.getElementById("predictionResultSection");
+            const predictionPlaceholder = document.getElementById("predictionPlaceholder");
+
             matrixDiv.innerHTML = ""; // Limpia la matriz anterior
-            // matrixDiv.classList.remove('hidden'); // No ocultar/mostrar aquí, se maneja en la sección
 
             if (binaryOutput.length === 0) {
-                matrixDiv.textContent = "No hay datos para mostrar la matriz.";
+                // Si no hay datos, mostrar placeholder y ocultar matriz
+                predictionPlaceholder.textContent = "No hay datos para mostrar la matriz.";
+                predictionPlaceholder.classList.remove('hidden');
+                matrixDiv.classList.add('hidden');
+                predictionResultSection.classList.remove('hidden'); // Asegura que la sección padre sea visible
                 return;
             }
 
+            // Si hay datos, mostrar matriz y ocultar placeholder
+            matrixDiv.classList.remove('hidden');
+            predictionPlaceholder.classList.add('hidden');
+            predictionResultSection.classList.remove('hidden'); // Asegura que la sección padre sea visible
+
             // Establecer el estilo de la cuadrícula dinámicamente
-            matrixDiv.style.gridTemplateColumns = `repeat(${cols}, 30px)`; // Ancho de celda de 30px
+            matrixDiv.style.gridTemplateColumns = `repeat(${cols}, 30px)`;
 
             binaryOutput.forEach((val) => {
                 const cell = document.createElement("div");
@@ -586,7 +598,7 @@
 
             // Ocultar resultados anteriores y placeholder
             predictionResultSection.classList.add('hidden');
-            predictionMatrix.classList.add('hidden');
+            predictionMatrix.classList.add('hidden'); // Asegurarse de que la matriz esté oculta inicialmente
             predictionPlaceholder.classList.add('hidden');
 
 
@@ -601,7 +613,7 @@
                 // 3. Realizar la predicción de eliminación de ruido localmente
                 const outputV4 = predecir_autoencoder_ruido(
                     Vk,
-                    // CORRECCIÓN: Acceso a las propiedades de pesosRuido con el sufijo 'a'
+                    // Acceso a las propiedades de pesosRuido con el sufijo 'a'
                     math.matrix(pesosRuido.w1a),
                     math.matrix(pesosRuido.w2a),
                     math.matrix(pesosRuido.w3a),
@@ -616,8 +628,8 @@
                 const binaryOutput = outputV4.toArray()[0].map(v => v > 0.5 ? 1 : 0);
 
                 // 5. Mostrar la matriz denoised en la sección de resultados
+                // La función mostrarMatriz ahora se encarga de mostrar/ocultar predictionMatrix y predictionPlaceholder
                 mostrarMatriz(binaryOutput, "predictionMatrix", 5); // Suponemos una matriz de 5 columnas
-                predictionResultSection.classList.remove('hidden'); // Mostrar la sección de resultados
 
             } catch (error) {
                 showErrorMessage(`Error durante la predicción de Denoise: ${error.message}`);
@@ -651,7 +663,7 @@
 
             // Ocultar resultados anteriores y placeholder
             predictionResultSection.classList.add('hidden');
-            predictionMatrix.classList.add('hidden');
+            predictionMatrix.classList.add('hidden'); // Asegurarse de que la matriz esté oculta inicialmente
             predictionPlaceholder.classList.add('hidden');
 
 
@@ -678,8 +690,8 @@
                 const binaryOutput = salida.toArray()[0].map(v => v > 0.5 ? 1 : 0);
 
                 // Mostrar la matriz decodificada
+                // La función mostrarMatriz ahora se encarga de mostrar/ocultar predictionMatrix y predictionPlaceholder
                 mostrarMatriz(binaryOutput, "predictionMatrix", 5); // Suponemos una matriz de 5 columnas
-                predictionResultSection.classList.remove('hidden'); // Mostrar la sección de resultados
 
             } catch (error) {
                 showErrorMessage(`Error durante la decodificación: ${error.message}`);
