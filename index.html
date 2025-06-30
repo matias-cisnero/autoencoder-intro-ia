@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Autoencoder Visual</title>
+    <title>Decodificador Visual</title>
     <!-- Enlace a Tailwind CSS CDN para estilos responsivos y modernos -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Enlace a Google Fonts - Inter para una tipografía limpia y profesional -->
@@ -92,7 +92,7 @@
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
     <div class="bg-white p-8 rounded-xl shadow-lg max-w-4xl w-full border border-gray-200 relative"> <!-- Added relative for absolute positioning of the link -->
-        <h1 class="text-4xl font-extrabold text-gray-800 mb-6 text-center">Autoencoder Visual</h1>
+        <h1 class="text-4xl font-extrabold text-gray-800 mb-6 text-center">Decodificador Visual</h1>
 
         <!-- Main content area: Graph and Results - side-by-side on md screens and up -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -198,11 +198,11 @@
 
             // Definir escalas lineales para los ejes X e Y, mapeando los datos a píxeles
             const xScale = d3.scaleLinear()
-                .domain([-0.05, 1.05]) // Rango de datos para el eje X, con un pequeño padding
+                .domain([-0.05, 20.0]) // Rango de datos para el eje X, con un pequeño padding
                 .range([0, width]); // Rango de píxeles para el eje X
 
             const yScale = d3.scaleLinear()
-                .domain([-0.05, 1.05]) // Rango de datos para el eje Y, con un pequeño padding
+                .domain([-0.05, 20.0]) // Rango de datos para el eje Y, con un pequeño padding
                 .range([height, 0]); // Rango de píxeles para el eje Y (invertido para que el origen esté abajo a la izquierda)
 
             // Dibujar los ejes X e Y (sin etiquetas de texto, como se solicitó)
@@ -290,8 +290,8 @@
          * @param {any} x - Entrada (número o matriz de math.js).
          * @returns {any} Salida de la función sigmoide.
          */
-        function sigmoide(x) {
-            return math.dotDivide(1, math.add(1, math.map(math.multiply(-1, x), math.exp)));
+        function gelu(x) {
+            return math.dotMultiply(0.5, math.dotMultiply(x, math.add(1, math.map(math.add(math.multiply(0.7978845608, x), math.multiply(0.0356774, math.dotPow(x, 3))), v => Math.tanh(v)))));
         }
 
         /**
@@ -305,8 +305,8 @@
          * @returns {Array<number[]>} La salida decodificada.
          */
         function decoder(V_latente, w3, w4, b3, b4) {
-            let V3 = sigmoide(math.add(math.multiply(V_latente, w3), b3));
-            let V4 = sigmoide(math.add(math.multiply(V3, w4), b4));
+            let V3 = gelu(math.add(math.multiply(V_latente, w3), b3));
+            let V4 = gelu(math.add(math.multiply(V3, w4), b4));
             return V4;
         }
 
